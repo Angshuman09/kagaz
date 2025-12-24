@@ -25,6 +25,7 @@ export function FileUpload({ children }: { children: React.ReactNode }) {
     const { user } = useUser();
     const generateUploadUrl = useMutation(api.fileStorage.generateUploadUrl);
     const InsertFileEntry = useMutation(api.fileStorage.AddFileEntryToDB);
+    const getFileUrl = useMutation(api.fileStorage.getFileUrl);
     const [file, setFile] = useState<File | null>(null);
     const [name, setName] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
@@ -45,11 +46,13 @@ export function FileUpload({ children }: { children: React.ReactNode }) {
         const { storageId } = await result.json();
         const fileId = uuidv4();
         console.log(storageId)
+        const fileUrl = await getFileUrl({ storageId });
         const response = await InsertFileEntry({
             fileId: fileId,
             storageId: storageId,
-            fileName: name!,
-            createdBy: user?.primaryEmailAddress?.emailAddress as string
+            fileName: name ?? "untitled file name",
+            createdBy: user?.primaryEmailAddress?.emailAddress as string,
+            fileUrl: fileUrl as string
         })
 
         console.log(response)
@@ -85,7 +88,7 @@ export function FileUpload({ children }: { children: React.ReactNode }) {
                         </DialogClose>
                         <Button disabled={loading} onClick={onUpload} type="submit">
                             {loading ? <Loader2
-                                className="mr-2 h-4 w-4 animate-spin"
+                                className="flex justify-center items-center mr-2 h-4 w-4 animate-spin"
                             /> : 'Save'}</Button>
                     </DialogFooter>
                 </DialogContent>
