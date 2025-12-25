@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
 import { v4 as uuidv4 } from 'uuid';
+import axios from "axios";
 
 import {
     Dialog,
@@ -17,7 +18,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { api } from "@/convex/_generated/api";
-import { useMutation } from "convex/react";
+import { useAction, useMutation } from "convex/react";
 import { Loader2, Loader2Icon } from "lucide-react"
 import { useUser } from "@clerk/clerk-react";
 
@@ -25,6 +26,7 @@ export function FileUpload({ children }: { children: React.ReactNode }) {
     const { user } = useUser();
     const generateUploadUrl = useMutation(api.fileStorage.generateUploadUrl);
     const InsertFileEntry = useMutation(api.fileStorage.AddFileEntryToDB);
+    const embedDocuments = useAction(api.myAction.ingest);
     const getFileUrl = useMutation(api.fileStorage.getFileUrl);
     const [file, setFile] = useState<File | null>(null);
     const [name, setName] = useState<string | null>(null);
@@ -56,6 +58,14 @@ export function FileUpload({ children }: { children: React.ReactNode }) {
         })
 
         console.log(response)
+
+        const apiResponse = await axios.get('api/pdf-loader?pdfUrl=' + fileUrl);
+        console.log(apiResponse.data.result)
+        const embedResponse = await embedDocuments({
+            splitText: apiResponse.data.result,
+            fileId: fileId
+        })
+        // console.log(embedResponse)
         setLoading(false);
     }
     return (
