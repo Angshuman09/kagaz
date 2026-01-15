@@ -14,6 +14,7 @@
   "dependencies": {
     "@clerk/clerk-react": "^5.56.0",
     "@clerk/nextjs": "^6.36.5",
+    "@google/genai": "^1.36.0",
     "@google/generative-ai": "^0.24.1",
     "@langchain/community": "^1.1.1",
     "@langchain/core": "^1.1.8",

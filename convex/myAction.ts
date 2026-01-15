@@ -8,27 +8,20 @@ import { v } from "convex/values";
 export const ingest = action({
     args: {
         splitText: v.array(v.string()),
-        fileId: v.string(),
+        fileId: v.string()
     },
     handler: async (ctx, args) => {
-        const cleanChunks = args.splitText.filter(c => c && c.trim().length > 0);
-
-        const embedder = new GoogleGenerativeAIEmbeddings({
-            apiKey: process.env.GOOGLE_API_KEY,
-            model: "gemini-embedding-001",
-            taskType: TaskType.RETRIEVAL_DOCUMENT,
-        });
-
-        const BATCH_SIZE = 5;
-        for (let i = 0; i < cleanChunks.length; i += BATCH_SIZE) {
-            const batch = cleanChunks.slice(i, i + BATCH_SIZE);
-            await ConvexVectorStore.fromTexts(
-                batch,
-                batch.map(() => ({ fileId: args.fileId })),
-                embedder,
-                { ctx }
-            );
-        }
+        await ConvexVectorStore.fromTexts(
+            args.splitText,
+            args.splitText.map(() => ({ fileId: args.fileId })),
+            new GoogleGenerativeAIEmbeddings({
+                apiKey: process.env.GOOGLE_API_KEY,
+                model: "gemini-embedding-001", // 3072 dimensions
+                taskType: TaskType.RETRIEVAL_DOCUMENT,
+                title: "Document title",
+            }),
+            { ctx }
+        );
 
         return "embedded";
     },
@@ -41,15 +34,21 @@ export const search = action({
         fileId: v.string()
     },
     handler: async (ctx, args) => {
+        if (!args.query) {
+            return [];
+        }
+
         const vectorStore = new ConvexVectorStore(new GoogleGenerativeAIEmbeddings({
             apiKey: process.env.GOOGLE_API_KEY,
-            model: "gemini-embedding-001", // 768 dimensions
+            model: "gemini-embedding-001", // 3072 dimensions
             taskType: TaskType.RETRIEVAL_DOCUMENT,
             title: "Document title",
         }), { ctx });
 
-        const resultOne = (await vectorStore.similaritySearch(args.query, 1)).filter(q => q.metadata.fileId === args.fileId);
-        console.log(resultOne);
+        const result = (await vectorStore.similaritySearch(args.query, 1)).filter(q => q.metadata.fileId === args.fileId);
+        console.log(result);
+
+        const resultOne = result.map(doc => ({ pageContent: doc.pageContent, metadata: doc.metadata }));
 
         return resultOne;
     },
