@@ -32,6 +32,7 @@ export function FileUpload({ children }: { children: React.ReactNode }) {
     const [name, setName] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [open, setOpen] = useState(false);
+
     const onFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         console.log(e.target.files![0])
         setFile(e.target.files![0])
@@ -86,12 +87,12 @@ export function FileUpload({ children }: { children: React.ReactNode }) {
                     </DialogHeader>
                     <div className="grid gap-4">
                         <div className="grid gap-3">
-                            <Label htmlFor="name-1">File name</Label>
-                            <Input onChange={(e) => setName(e.target.value)} placeholder="Enter file name" id="name-1" name="name" />
-                        </div>
-                        <div className="grid gap-3">
                             <Label htmlFor="file-1">File</Label>
                             <Input onChange={onFileSelect} placeholder="Upload PDF" id="file-1" name="file" type="file" accept=".pdf" />
+                        </div>
+                        <div className="grid gap-3">
+                            <Label htmlFor="name-1">File name</Label>
+                            <Input onChange={(e) => setName(e.target.value)} placeholder="Enter file name" id="name-1" name="name" />
                         </div>
                     </div>
                     <DialogFooter>

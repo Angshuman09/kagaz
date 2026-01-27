@@ -1,49 +1,32 @@
 'use client'
 import { EditorExtension } from './Editor-extension'
 import { useEditor, EditorContent } from '@tiptap/react'
-import StarterKit from '@tiptap/starter-kit'
-import Placeholder from '@tiptap/extension-placeholder'
-import TextAlign from '@tiptap/extension-text-align'
-import Underline from '@tiptap/extension-underline'
-import Link from '@tiptap/extension-link'
-import Image from '@tiptap/extension-image'
-import Highlight from '@tiptap/extension-highlight'
+import { useQuery } from 'convex/react'
+import { api } from '@/convex/_generated/api'
+import { useParams } from 'next/navigation'
+import { useEffect } from 'react'
+import { Editor } from '@tiptap/react'
 
-export const TextEditor = () => {
+interface EditorExtensionProps {
+    editor: Editor | null
+}
 
-    const editor = useEditor({
-        extensions: [
-            StarterKit.configure({
-                underline: false,
-                link: false,
-            }),
-            Placeholder.configure({
-                placeholder: 'Start writing your amazing document...',
-            }),
-            TextAlign.configure({
-                types: ['heading', 'paragraph'],
-            }),
-            Underline,
-            Link.configure({
-                openOnClick: false,
-            }),
-            Image,
-            Highlight,
-        ],
-        editorProps: {
-            attributes: {
-                class: 'prose prose-slate max-w-none focus:outline-none min-h-[500px] px-8 py-6',
-            },
-        },
-        content: '',
-        immediatelyRender: false,
-    })
+export const TextEditor = ({editor}: EditorExtensionProps) => {
+
+    const { fileId } = useParams();
+    const getNotes = useQuery(api.notes.getNotes, fileId ? { fileId: fileId as string } : "skip");
+
+    
+
+    useEffect(() => {
+        if (getNotes) {
+            editor && editor.commands.setContent(getNotes[0]?.note);
+        }
+    }, [getNotes && editor])
 
     if (!editor) {
         return null
     }
-
-
 
     return (
         <div className='border border-slate-200 rounded-xl bg-white shadow-sm overflow-hidden flex flex-col h-full'>

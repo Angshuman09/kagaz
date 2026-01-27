@@ -21,9 +21,10 @@ import { getGeminiResponse } from '@/configs/AIModel'
 import '@tiptap/extension-highlight'
 import '@tiptap/extension-underline'
 import '@tiptap/extension-text-align'
-import { useAction } from 'convex/react'
+import { useAction, useMutation } from 'convex/react'
 import { api } from '@/convex/_generated/api.js'
 import { useParams } from 'next/navigation'
+import { useUser } from '@clerk/nextjs'
 
 interface EditorExtensionProps {
     editor: Editor | null
@@ -31,8 +32,11 @@ interface EditorExtensionProps {
 
 export const EditorExtension = ({ editor }: EditorExtensionProps) => {
     const [isActive, setIsActive] = useState(false)
+    const { user } = useUser();
+    const [loading, setLoading] = useState(false);
 
     const SearchAI = useAction(api.myAction.search)
+    const addNotes = useMutation(api.notes.saveNote);
     const { fileId } = useParams();
 
     useEffect(() => {
@@ -56,7 +60,7 @@ export const EditorExtension = ({ editor }: EditorExtensionProps) => {
     }
 
     const onAiClick = async () => {
-
+        setLoading(true);
         const selectedText = editor.state.doc.textBetween(
             editor.state.selection.from,
             editor.state.selection.to,
@@ -76,7 +80,7 @@ export const EditorExtension = ({ editor }: EditorExtensionProps) => {
 
         console.log('unformatted answer', result)
 
-        const PROMPT = `For this question ${selectedText}, the answer is ${result}. Please give the answer in HTML format.`
+        const PROMPT = `For this question ${selectedText}, the answer is ${result}. Please give the answer in HTML format with simple and easy to understand.`
 
         const formattedAnswer = await getGeminiResponse(PROMPT)
 
@@ -87,10 +91,19 @@ export const EditorExtension = ({ editor }: EditorExtensionProps) => {
         const AllText = editor.getHTML();
 
         editor.commands.setContent(AllText + '<p><strong>Answer: </strong>' + finalAnswer + '</p>');
+
+        const Allnote = editor.getHTML();
+
+        await addNotes({
+            fileId: fileId as string,
+            note: Allnote,
+            createBy: user?.primaryEmailAddress?.emailAddress as string
+        })
+        setLoading(false);
     }
 
     return (
-        <div className='bg-gradient-to-b from-white to-gray-50/50 border-b border-gray-200/80 px-6 py-3 rounded-t-xl shadow-sm backdrop-blur-sm'>
+        <div className='bg-linear-to-b from-white to-gray-50/50 border-b border-gray-200/80 px-6 py-3 rounded-t-xl shadow-sm backdrop-blur-sm'>
             <div className="flex items-center gap-2 flex-wrap">
 
                 {/* Unified Toolbar Group */}
@@ -100,8 +113,8 @@ export const EditorExtension = ({ editor }: EditorExtensionProps) => {
                     <button
                         onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
                         className={`p-2 rounded-md transition-all duration-150 ${editor.isActive('heading', { level: 1 })
-                                ? 'bg-blue-50 text-blue-600 shadow-sm'
-                                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                            ? 'bg-blue-50 text-blue-600 shadow-sm'
+                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                             }`}
                         title="Heading 1"
                     >
@@ -110,8 +123,8 @@ export const EditorExtension = ({ editor }: EditorExtensionProps) => {
                     <button
                         onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
                         className={`p-2 rounded-md transition-all duration-150 ${editor.isActive('heading', { level: 2 })
-                                ? 'bg-blue-50 text-blue-600 shadow-sm'
-                                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                            ? 'bg-blue-50 text-blue-600 shadow-sm'
+                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                             }`}
                         title="Heading 2"
                     >
@@ -120,8 +133,8 @@ export const EditorExtension = ({ editor }: EditorExtensionProps) => {
                     <button
                         onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
                         className={`p-2 rounded-md transition-all duration-150 ${editor.isActive('heading', { level: 3 })
-                                ? 'bg-blue-50 text-blue-600 shadow-sm'
-                                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                            ? 'bg-blue-50 text-blue-600 shadow-sm'
+                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                             }`}
                         title="Heading 3"
                     >
@@ -135,8 +148,8 @@ export const EditorExtension = ({ editor }: EditorExtensionProps) => {
                     <button
                         onClick={() => editor.chain().focus().toggleBold().run()}
                         className={`p-2 rounded-md transition-all duration-150 ${editor.isActive('bold')
-                                ? 'bg-blue-50 text-blue-600 shadow-sm'
-                                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                            ? 'bg-blue-50 text-blue-600 shadow-sm'
+                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                             }`}
                         title="Bold"
                     >
@@ -145,8 +158,8 @@ export const EditorExtension = ({ editor }: EditorExtensionProps) => {
                     <button
                         onClick={() => editor.chain().focus().toggleItalic().run()}
                         className={`p-2 rounded-md transition-all duration-150 ${editor.isActive('italic')
-                                ? 'bg-blue-50 text-blue-600 shadow-sm'
-                                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                            ? 'bg-blue-50 text-blue-600 shadow-sm'
+                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                             }`}
                         title="Italic"
                     >
@@ -155,8 +168,8 @@ export const EditorExtension = ({ editor }: EditorExtensionProps) => {
                     <button
                         onClick={() => editor.chain().focus().toggleUnderline().run()}
                         className={`p-2 rounded-md transition-all duration-150 ${editor.isActive('underline')
-                                ? 'bg-blue-50 text-blue-600 shadow-sm'
-                                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                            ? 'bg-blue-50 text-blue-600 shadow-sm'
+                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                             }`}
                         title="Underline"
                     >
@@ -165,8 +178,8 @@ export const EditorExtension = ({ editor }: EditorExtensionProps) => {
                     <button
                         onClick={() => editor.chain().focus().toggleHighlight().run()}
                         className={`p-2 rounded-md transition-all duration-150 ${editor.isActive('highlight')
-                                ? 'bg-amber-50 text-amber-600 shadow-sm'
-                                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                            ? 'bg-amber-50 text-amber-600 shadow-sm'
+                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                             }`}
                         title="Highlight"
                     >
@@ -180,8 +193,8 @@ export const EditorExtension = ({ editor }: EditorExtensionProps) => {
                     <button
                         onClick={() => editor.chain().focus().setTextAlign('left').run()}
                         className={`p-2 rounded-md transition-all duration-150 ${editor.isActive({ textAlign: 'left' })
-                                ? 'bg-blue-50 text-blue-600 shadow-sm'
-                                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                            ? 'bg-blue-50 text-blue-600 shadow-sm'
+                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                             }`}
                         title="Align Left"
                     >
@@ -190,8 +203,8 @@ export const EditorExtension = ({ editor }: EditorExtensionProps) => {
                     <button
                         onClick={() => editor.chain().focus().setTextAlign('center').run()}
                         className={`p-2 rounded-md transition-all duration-150 ${editor.isActive({ textAlign: 'center' })
-                                ? 'bg-blue-50 text-blue-600 shadow-sm'
-                                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                            ? 'bg-blue-50 text-blue-600 shadow-sm'
+                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                             }`}
                         title="Align Center"
                     >
@@ -200,8 +213,8 @@ export const EditorExtension = ({ editor }: EditorExtensionProps) => {
                     <button
                         onClick={() => editor.chain().focus().setTextAlign('right').run()}
                         className={`p-2 rounded-md transition-all duration-150 ${editor.isActive({ textAlign: 'right' })
-                                ? 'bg-blue-50 text-blue-600 shadow-sm'
-                                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                            ? 'bg-blue-50 text-blue-600 shadow-sm'
+                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                             }`}
                         title="Align Right"
                     >
@@ -215,8 +228,8 @@ export const EditorExtension = ({ editor }: EditorExtensionProps) => {
                     <button
                         onClick={() => editor.chain().focus().toggleBulletList().run()}
                         className={`p-2 rounded-md transition-all duration-150 ${editor.isActive('bulletList')
-                                ? 'bg-blue-50 text-blue-600 shadow-sm'
-                                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                            ? 'bg-blue-50 text-blue-600 shadow-sm'
+                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                             }`}
                         title="Bullet List"
                     >
@@ -225,8 +238,8 @@ export const EditorExtension = ({ editor }: EditorExtensionProps) => {
                     <button
                         onClick={() => editor.chain().focus().toggleOrderedList().run()}
                         className={`p-2 rounded-md transition-all duration-150 ${editor.isActive('orderedList')
-                                ? 'bg-blue-50 text-blue-600 shadow-sm'
-                                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                            ? 'bg-blue-50 text-blue-600 shadow-sm'
+                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                             }`}
                         title="Ordered List"
                     >
@@ -237,11 +250,12 @@ export const EditorExtension = ({ editor }: EditorExtensionProps) => {
                 {/* AI Button - Separate but cohesive */}
                 <button
                     onClick={() => onAiClick()}
-                    className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-500 hover:to-orange-500 text-white rounded-lg shadow-sm hover:shadow-md transition-all duration-150 font-medium text-sm"
+                    disabled={loading}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-[#d8b131] hover:bg-[#D4AF37] text-white rounded-lg shadow-sm hover:shadow-md transition-all duration-150 font-medium text-sm"
                     title="AI Assistant"
                 >
                     <Sparkle className="w-4 h-4" />
-                    <span>AI</span>
+                    <span>{loading? "Thinking...":"AI"}</span>
                 </button>
             </div>
         </div>

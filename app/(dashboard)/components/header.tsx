@@ -5,18 +5,24 @@ import { useState } from "react";
 import { Button } from '@/components/ui/button';
 import { FileUpload } from './file-upload';
 import { useRouter } from 'next/navigation';
+import { useUser } from '@clerk/clerk-react';
+import { useQuery } from 'convex/react';
+import { api } from '@/convex/_generated/api';
+
 
 export const Header = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [pdfs, setPdfs] = useState([
-    { id: 1, name: 'Marketing Report Q4.pdf', uploadDate: '2024-12-20', pages: 24 },
-    { id: 2, name: 'Financial Analysis.pdf', uploadDate: '2024-12-18', pages: 18 }
-  ]);
-
   const router = useRouter();
 
+   const { user } = useUser();
 
-  const progressValue = (pdfs.length / 5) * 100;
+  const getAllFiles = useQuery(api.fileStorage.getUserFiles,{
+    userEmail: user?.primaryEmailAddress?.emailAddress as string
+  })
+
+
+
+  const progressValue = getAllFiles&&getAllFiles.length ? (getAllFiles.length / 5) * 100 : 0;
   return (
     <>
       <button
@@ -75,11 +81,11 @@ export const Header = () => {
           <div className="p-4 rounded-lg bg-slate-50 border border-slate-200">
             <div className="flex items-center justify-between mb-3">
               <span className="text-sm font-medium text-slate-700">Storage</span>
-              <span className="text-sm font-semibold text-slate-900">{pdfs.length}/5 PDFs</span>
+              <span className="text-sm font-semibold text-slate-900">{getAllFiles?.length}/5 PDFs</span>
             </div>
             <Progress value={progressValue} className="h-2" />
             <p className="text-xs text-slate-500 mt-3">
-              {5 - pdfs.length} upload{5 - pdfs.length !== 1 ? 's' : ''} remaining on free plan
+              {5 - (getAllFiles?.length || 0)} upload{5 - (getAllFiles?.length || 0) !== 1 ? 's' : ''} remaining on free plan
             </p>
           </div>
 

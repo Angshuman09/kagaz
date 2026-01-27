@@ -1,32 +1,55 @@
-import { UserButton, useUser } from "@clerk/nextjs";
+import { Button } from "@/components/ui/button";
+import { UserButton } from "@clerk/nextjs";
+import { useParams } from "next/navigation";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { useUser } from "@clerk/nextjs";
+import { useState } from "react";
+import { Editor } from "@tiptap/react";
 
-export const WorkspaceHeader = ({ fileName }: { fileName: string }) => {
-    const { user } = useUser();
+export const WorkspaceHeader = ({ fileName, editor }: { fileName: string, editor: Editor | null }) => {
+
+    const { fileId } = useParams();
+    const [loading, setLoading] = useState(false);
+
+    const {user} = useUser();
+    const saveNote = useMutation(api.notes.saveNote);
+
+    const HandleSave = async ()=>{
+        setLoading(true);
+        await saveNote({
+            fileId: fileId as string,
+            note: editor?.getHTML() as string,
+            createBy: user?.primaryEmailAddress?.emailAddress as string,
+        })
+        setLoading(false);
+    }
+
     return (
         <header className="h-16 bg-white border-b border-slate-200 px-4 lg:px-8 flex items-center justify-between">
             <div className="flex items-center gap-4">
                 <div className="hidden lg:block">
                     <h1 className="text-lg font-semibold text-slate-900">Workspace</h1>
-                    <p className="text-xs text-slate-500">{fileName}</p>
                 </div>
                 <div className="lg:hidden flex flex-col justify-center items-center">
                     <h1 className="text-lg font-semibold text-slate-900">Workspace</h1>
-                    <p className="text-xs text-slate-500">{fileName}</p>
                 </div>
             </div>
 
+            <div className="font-bold text-slate-900">
+                {fileName}
+            </div>
+
             {/* Profile */}
-            <div className="flex items-center gap-3">
-                <div className="hidden sm:block text-right">
-                    <p className="text-sm font-medium text-slate-900">{user?.firstName}</p>
-                    <p className="text-xs text-slate-500">Free Plan</p>
-                </div>
-                <UserButton appearance={{
-                    elements: {
-                        userButtonAvatar: "w-12 h-12",  // Tailwind classes
-                        userButtonTrigger: "p-2",
-                    },
-                }} />
+
+            <div className="flex items-center gap-4">
+                <Button onClick={HandleSave} disabled={loading}>{loading ? "Saving..." : "Save"}</Button>
+                    <UserButton appearance={{
+                        elements: {
+                            userButtonAvatar: "w-12 h-12",  // Tailwind classes
+                            userButtonTrigger: "p-2",
+                        },
+                    }} />
             </div>
         </header>
     )
