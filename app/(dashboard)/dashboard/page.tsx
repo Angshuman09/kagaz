@@ -2,54 +2,36 @@
 import { FileText, Upload } from 'lucide-react';
 
 import React, { useState } from 'react';
-import { Header } from '../components/header';
 import { UserButton, useUser } from '@clerk/clerk-react';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
+import Upgrade from './upgrade/page';
+import { usePathname } from 'next/navigation';
+import {Sidebar} from '../components/sidebar'
+import Header from '../components/header'
+
 export default function Dashboard() {
 
+  const path = usePathname();
+
   const { user } = useUser();
-  const [loading, setLoading] = useState(false);
+  // const [loading, setLoading] = useState(false);
 
   const getAllFiles = useQuery(api.fileStorage.getUserFiles,{
     userEmail: user?.primaryEmailAddress?.emailAddress as string
   })
 
   return (
-    <div className="flex h-screen bg-slate-50">
+    <>
       {/* Mobile Menu Button */}
-      <Header />
+      {path === '/dashboard/upgrade' && <Upgrade/>}
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <header className="h-16 bg-white border-b border-slate-200 px-4 lg:px-8 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="hidden lg:block">
-              <h1 className="text-lg font-semibold text-slate-900">Dashboard</h1>
-              <p className="text-xs text-slate-500">Manage your documents</p>
-            </div>
-            <div className="lg:hidden">
-              <h1 className="text-lg font-semibold text-slate-900 ml-12">Dashboard</h1>
-            </div>
-          </div>
-
-          {/* Profile */}
-          <div className="flex items-center gap-3">
-            <div className="hidden sm:block text-right">
-              <p className="text-sm font-medium text-slate-900">{user?.firstName}</p>
-              <p className="text-xs text-slate-500">Free Plan</p>
-            </div>
-            <UserButton appearance={{
-              elements: {
-                userButtonAvatar: "w-12 h-12",  // Tailwind classes
-                userButtonTrigger: "p-2",
-              },
-            }} />
-          </div>
-        </header>
+        <Header name="Dashboard"/>
 
         {/* PDF Grid */}
         <main className="flex-1 overflow-auto p-4 lg:p-8">
@@ -80,20 +62,6 @@ export default function Dashboard() {
                 <FileText size={32} className="text-slate-400" />
               </div>
               <h3 className="text-lg font-semibold text-slate-900 mb-2">No documents yet</h3>
-              <p className="text-sm text-slate-500 mb-6 max-w-sm">
-                Upload your first PDF to get started with कागज़
-              </p>
-              <label className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-slate-900 text-white hover:bg-slate-800 transition-colors cursor-pointer text-sm font-medium">
-                <Upload size={16} />
-                Upload PDF
-                <input
-                  type="file"
-                  accept=".pdf"
-                  multiple
-                  className="hidden"
-                // onChange={handleFileUpload}
-                />
-              </label>
             </div>
           ) : (
             <div>
@@ -133,6 +101,6 @@ export default function Dashboard() {
           )}
         </main>
       </div>
-    </div>
+    </>
   );
 }
