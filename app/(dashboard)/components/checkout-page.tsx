@@ -8,7 +8,9 @@ import {
 import convertToSubcurrency from "@/lib/convertToSubcurrency";
 import { Button } from "@/components/ui/button";
 import LoadingPage from "@/components/loading";
-import Form from 'next/form';
+import { useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { useUser } from "@clerk/clerk-react";
 
 const CheckoutPage = ({ amount }: { amount: number }) => {
   const stripe = useStripe();
@@ -16,6 +18,8 @@ const CheckoutPage = ({ amount }: { amount: number }) => {
   const [errorMessage, setErrorMessage] = useState<string>();
   const [clientSecret, setClientSecret] = useState("");
   const [loading, setLoading] = useState(false);
+  const userUpgradePlan = useMutation(api.user.upgradeUser);
+  const user = useUser();
 
   useEffect(() => {
     fetch("/api/create-payment", {
@@ -49,13 +53,17 @@ const CheckoutPage = ({ amount }: { amount: number }) => {
       elements,
       clientSecret,
       confirmParams: {
-        return_url: `http://www.localhost:3000/payment-success?amount=${amount}`,
+        return_url: `${window.location.origin}/payment-success`,
       },
     });
 
     if (error) {
       setErrorMessage(error.message);
     }
+
+    const result = await userUpgradePlan({
+      userEmail: user?.primaryEmailAddress?.emailAddress as string,
+    })
 
     setLoading(false);
   };
@@ -81,7 +89,7 @@ const CheckoutPage = ({ amount }: { amount: number }) => {
       {/* Payment Form Section */}
       <div className="w-full">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-          <Form action="" onSubmit={handleSubmit} className="space-y-8">
+          <form action="" onSubmit={handleSubmit} className="space-y-8">
             {/* Amount Display */}
             <div className="bg-black text-white p-6 md:p-8">
               <div className="flex items-baseline justify-between flex-wrap gap-4">
@@ -181,45 +189,9 @@ const CheckoutPage = ({ amount }: { amount: number }) => {
                 )}
               </span>
             </Button>
-
-            {/* Security badges */}
-            <div className="flex items-center justify-center gap-6 pt-6 border-t border-gray-200">
-              <div className="flex items-center gap-2 text-gray-500">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                    fillRule="evenodd"
-                    d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                <span className="text-sm font-medium">256-bit SSL Encryption</span>
-              </div>
-              <div className="w-1 h-1 bg-gray-300 rounded-full" />
-              <div className="flex items-center gap-2 text-gray-500">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                <span className="text-sm font-medium">PCI DSS Compliant</span>
-              </div>
-            </div>
-          </Form>
+          </form>
         </div>
       </div>
-
-      <style jsx>{`
-        .payment-element-wrapper :global(.Input) {
-          transition: all 0.2s;
-        }
-
-        .payment-element-wrapper :global(.Input:focus) {
-          border-color: #D4AF37;
-          box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
-        }
-      `}</style>
     </div>
   );
 };

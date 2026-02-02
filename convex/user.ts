@@ -18,6 +18,7 @@ export const createUser = mutation({
         email: args.email,
         userName: args.userName,
         imageUrl: args.imageUrl,
+        upgrade: false
       });
 
       return "Inserted new user";
@@ -26,3 +27,18 @@ export const createUser = mutation({
     return "User already exists";
   },
 });
+
+export const upgradeUser = mutation({
+  args:{
+    userEmail: v.string()
+  },
+  handler: async (ctx, args)=>{
+    const result = await ctx.db.query('users').filter(q=>q.eq(q.field('email'), args.userEmail)).collect();
+
+    if(result){
+      ctx.db.patch(result[0]._id,{upgrade:true});
+      return "success"
+    }
+    return "payment failed"
+  }
+})
