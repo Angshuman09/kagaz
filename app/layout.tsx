@@ -15,8 +15,30 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "कागज़",
-  description: "कागज़ - AI Powered Document Editor",
+  title: "Kagaz",
+  description: "Smart note-taking editor",
+
+  openGraph: {
+    title: "Kagaz",
+    description: "Smart note-taking editor",
+    url: "https://kagaz-notes.vercel.app",
+    siteName: "Kagaz",
+    images: [
+      {
+        url: "/homePage.png",
+        width: 1200,
+        height: 630,
+      },
+    ],
+    type: "website",
+  },
+
+  twitter: {
+    card: "summary_large_image",
+    title: "Kagaz",
+    description: "Smart note-taking editor",
+    images: ["/homePage.png"],
+  },
 };
 
 export default function RootLayout({
@@ -32,7 +54,7 @@ export default function RootLayout({
         <ClerkProvider dynamic>
           <ConvexClientProvider>{children}</ConvexClientProvider>
         </ClerkProvider>
-        <Toaster/>
+        <Toaster />
       </body>
     </html>
   );
