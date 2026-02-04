@@ -10,7 +10,7 @@ const Pricing = () => {
   const router = useRouter();
   const {user} = useUser();
   const handleUpgrade = () => {
-    process.env.NODE_ENV === 'development' ? router.push("https://buy.stripe.com/test_bJefZibOAacfghw7iRgnK00") : router.push("/")
+    process.env.NODE_ENV === 'development' ? router.push("https://buy.stripe.com/test_bJefZibOAacfghw7iRgnK00") : router.push("https://buy.stripe.com/test_bJefZibOAacfghw7iRgnK00")
     // const currentUser = useQuery(api.user.getUser,{
     //   email: user?.primaryEmailAddress?.emailAddress as string
     // });
