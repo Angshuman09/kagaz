@@ -72,7 +72,7 @@ const Pricing = () => {
                   d="M5 13l4 4L19 7"
                 />
               </svg>
-              <span>5 credits per month</span>
+              <span>5 credits only</span>
             </li>
             <li className="flex items-center gap-2 text-slate-700">
               <svg
@@ -88,7 +88,7 @@ const Pricing = () => {
                   d="M5 13l4 4L19 7"
                 />
               </svg>
-              <span>Up to 100 notes</span>
+              <span>Up to 20 notes</span>
             </li>
             <li className="flex items-center gap-2 text-slate-700">
               <svg
@@ -104,7 +104,7 @@ const Pricing = () => {
                   d="M5 13l4 4L19 7"
                 />
               </svg>
-              <span>Basic search</span>
+              {/* <span>Basic search</span> */}
             </li>
             <li className="flex items-center gap-2 text-slate-700">
               <svg
@@ -120,19 +120,17 @@ const Pricing = () => {
                   d="M5 13l4 4L19 7"
                 />
               </svg>
-              <span>Community support</span>
+              {/* <span>Community support</span> */}
             </li>
           </ul>
         </div>
 
-        {/* Pro Tier */}
         <div className="group relative p-6 sm:p-8 bg-amber-50 border border-black/5 rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300">
-          {/* Badge */}
+
           <div className="absolute -top-2.5 sm:-top-3 right-4 px-2 sm:px-2.5 py-0.5 bg-[#D4AF37] text-black text-[9px] sm:text-[10px] font-semibold rounded-full tracking-wide">
             POPULAR
           </div>
 
-          {/* Plan Title + Price */}
           <div className="mb-6 sm:mb-8">
             <h3 className="text-lg sm:text-xl font-semibold mb-2 text-black">
               Pro
@@ -149,7 +147,6 @@ const Pricing = () => {
             </div>
           </div>
 
-          {/* CTA Button */}
           <button
             onClick={handleUpgrade}
             className="w-full py-2.5 mb-6 sm:mb-8 bg-slate-900 text-white hover:bg-black font-medium rounded-lg transition-all text-xs sm:text-sm"
@@ -157,14 +154,11 @@ const Pricing = () => {
             Upgrade now
           </button>
 
-          {/* Features */}
           <ul className="space-y-2.5 sm:space-y-3 text-xs sm:text-sm">
             {[
               "Unlimited credits",
               "Unlimited notes",
-              "Advanced AI search",
               "Priority support",
-              "Advanced analytics",
             ].map((item) => (
               <li
                 key={item}
