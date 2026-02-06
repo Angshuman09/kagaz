@@ -20,7 +20,7 @@ const VideoPage = () => {
         <h1 className="text-white text-2xl font-semibold mb-4">How to Use</h1>
 
         <video
-          src="/how-to-use.mov"
+          src="/how-to-use.mp4"
           autoPlay
           loop
           muted

@@ -4,7 +4,8 @@ const isPublicRoute = createRouteMatcher([
   '/',
   '/sign-in(.*)',
   '/sign-up(.*)',
-  '/video'
+  '/video',
+  '/how-to-use.mp4'
 ])
 
 export default clerkMiddleware(async (auth, req) => {
