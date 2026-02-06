@@ -7,11 +7,10 @@
 *Write, organize, and ask questions. Kagaz turns your notes into answers.*
 
 [![Star on GitHub](https://img.shields.io/github/stars/Angshuman09/kagaz?style=social)](https://github.com/Angshuman09/kagaz)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Next.js](https://img.shields.io/badge/Next.js-15-black)](https://nextjs.org/)
 [![Convex](https://img.shields.io/badge/Convex-Database-orange)](https://convex.dev/)
 
-[Live Demo](https://kagaz-red.vercel.app) • [Report Bug](https://github.com/Angshuman09/kagaz/issues) • [Request Feature](https://github.com/Angshuman09/kagaz/issues)
+[Live Demo](https://kagaz-notes.vercel.app) • [Report Bug](https://github.com/Angshuman09/kagaz/issues) • [Request Feature](https://github.com/Angshuman09/kagaz/issues)
 
 </div>
 
