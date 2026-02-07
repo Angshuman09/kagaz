@@ -3,6 +3,11 @@ import Stripe from "stripe";
 import { api } from "@/convex/_generated/api";
 import { ConvexHttpClient } from "convex/browser";
 
+// CRITICAL: Add these for Vercel
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+export const maxDuration = 30; // Increase timeout for webhook processing
+
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
@@ -14,7 +19,7 @@ export const POST = async (req: NextRequest) => {
 
   try {
     event = stripe.webhooks.constructEvent(payload, sig!, endpointSecret);
-
+    
     switch (event.type) {
       case 'checkout.session.completed':
         console.log("checkout session completed");
@@ -25,14 +30,14 @@ export const POST = async (req: NextRequest) => {
 
         // Get customer email from session
         const customerEmail = session.customer_details?.email || session.customer_email;
-
+        
         if (customerEmail) {
           // Update user in Convex
           await convex.mutation(api.user.upgradeUser, {
             email: customerEmail,
             upgrade: true,
           });
-          console.log(`User ${customerEmail} upgraded successfully`);
+          console.log(`User ${customerEmail} upgraded successfully`); // Fixed: backticks
         }
         break;
 
@@ -49,21 +54,28 @@ export const POST = async (req: NextRequest) => {
             email: customer.email,
             upgrade: false,
           });
-          console.log(`User ${customer.email} downgraded successfully`);
+          console.log(`User ${customer.email} downgraded successfully`); // Fixed: backticks
         }
         break;
 
       default:
-        console.log(`Unhandled event type ${event.type}`);
+        console.log(`Unhandled event type ${event.type}`); // Fixed: backticks
     }
 
-    return NextResponse.json({ status: "success" });
-
+    return NextResponse.json({ status: "success", received: true });
+    
   } catch (error) {
     console.error("Webhook error:", error);
     return NextResponse.json(
-      { error: `Failed to trigger webhook: ${error}` },
+      { error: `Webhook Error: ${error}` },
       { status: 400 }
     );
   }
+};
+
+export const GET = async (req: NextRequest) => {
+  return NextResponse.json({ 
+    message: "Webhook endpoint is alive!",
+    timestamp: new Date().toISOString()
+  });
 };
