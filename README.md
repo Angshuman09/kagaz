@@ -82,7 +82,7 @@
 - Node.js 18+ and npm
 - A Convex account ([sign up here](https://convex.dev/))
 - A Clerk account ([sign up here](https://clerk.com/))
-- A Stripe account ([sign up here](https://stripe.com/))
+- A Dodo Payments account ([sign up here](https://dodopayments.com/))
 
 ---
 
@@ -139,11 +139,13 @@ kagaz/
     NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL=/
     CLERK_JWT_ISSUER_DOMAIN= your_jwt_issuer_domain
     GEMINI_API_KEY= your_gemini_api_key
-    NEXT_PUBLIC_STRIPE_PUBLIC_KEY = your_stripe_public_key
-    STRIPE_SECRET_KEY = your_stripe_secret_key
-    STRIPE_WEBHOOK_SECRET = your_stripe_webhook_secret
-    STRIPE_PRICE_ID= your_stripe_price_id
     HOST_URL = your_host_url
+    DODO_PAYMENTS_API_KEY= your_dodo_api_key
+    DODO_WEBHOOK_SECRET= your_dodo_webhook_secret
+    DODO_PAYMENTS_ENVIRONMENT= test_mode
+    NEXT_PUBLIC_DODO_PAYMENTS_MODE= test
+    DODO_PRODUCT_ID= your_dodo_product_id
+    NEXT_PUBLIC_DODO_PRODUCT_ID= your_dodo_product_id
    ```
 
 4. **Set up Convex**
@@ -183,6 +185,6 @@ If you find this project useful, please consider giving it a star!
 
 **[⬆ Back to Top](#-kagaz)**
 
-Made with ❤️ by [Angshuman](https://github.com/Angshuman09)
+Made with ❤️ by [Angshuman](https://x.com/angshuhere)
 
 </div>

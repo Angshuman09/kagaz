@@ -104,7 +104,7 @@ export default function Home() {
       {/* Hero Section */}
       <section className="container mx-auto px-4 sm:px-6 py-12 sm:py-20 text-center max-w-4xl">
         <Link
-          href="https://github.com/Angshuman09/axis"
+          href="https://github.com/Angshuman09/kagaz"
           target="_blank"
           rel="noopener noreferrer"
           className="group inline-flex items-center gap-2 px-3 py-1.5 mb-6 sm:mb-8 bg-white border border-slate-200 rounded-full text-xs font-medium text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all"
@@ -122,7 +122,7 @@ export default function Home() {
         <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold mb-4 sm:mb-6 text-slate-900 tracking-tight leading-tight px-2 font-(family-name:var(--font-outfit))">
           Your{" "}
           <span
-            className={`text-[#D4AF37] italic text-[1.08em] ${elegantFont.className}`}
+            className={`text-[#D4AF37] text-[1.08em] font-(family-name:var(--font-outfit))`}
           >
             intelligent
           </span>{" "}

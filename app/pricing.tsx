@@ -1,38 +1,75 @@
 "use client";
 import ShinyText from "@/components/ShinyText";
 import { useRouter } from "next/navigation";
-import { useAction } from "convex/react";
-import { api } from "@/convex/_generated/api";
+import { DodoPayments } from "dodopayments-checkout";
+import { useEffect, useState } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { toast } from "sonner";
-import { useState } from "react";
 
 const Pricing = () => {
   const router = useRouter();
   const { user } = useUser();
   const [isLoading, setIsLoading] = useState(false);
-  const createCheckout = useAction(api.stripe.createPaymentCheckout);
+
+  useEffect(() => {
+    const mode = (process.env.NEXT_PUBLIC_DODO_PAYMENTS_MODE || "test") as "test" | "live";
+    DodoPayments.Initialize({
+      mode,
+      onEvent: (event) => {
+        if (event.event_type === "checkout.opened") {
+          setIsLoading(false);
+        } else if (event.event_type === "checkout.error") {
+          setIsLoading(false);
+          console.error("Checkout error:", event.data);
+          toast.error("Checkout error. Please try again.");
+        } else if (event.event_type === "checkout.closed") {
+          setIsLoading(false);
+        }
+      },
+    });
+  }, []);
 
   const handleUpgrade = async () => {
     if (!user) {
       toast.error("Please sign in to upgrade");
+      router.push("/sign-in");
       return;
     }
 
     try {
       setIsLoading(true);
 
-      const session = await createCheckout({});
+      const response = await fetch("/api/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          productId: process.env.NEXT_PUBLIC_DODO_PRODUCT_ID || "pdt_0Np0uOEX0S3ENoriL45Hf",
+          customer: {
+            email: user.primaryEmailAddress?.emailAddress,
+            name: user.fullName || user.firstName || "Customer",
+          },
+          metadata: {
+            userId: user.id,
+            email: user.primaryEmailAddress?.emailAddress || "",
+          },
+        }),
+      });
 
-      if (session.url) {
-        window.location.href = session.url;
-      } else {
-        toast.error("Failed to create checkout session");
+      const data = await response.json();
+
+      if (!response.ok || !data.checkout_url) {
+        throw new Error(data.error || data.message || "Failed to create checkout session");
       }
-    } catch (error) {
+
+      await DodoPayments.Checkout.open({
+        checkoutUrl: data.checkout_url,
+      });
+    } catch (error: unknown) {
       console.error("Checkout error:", error);
-      toast.error("Failed to start checkout. Please try again.");
-    } finally {
+      const message = error instanceof Error ? error.message : "Failed to start checkout. Please try again.";
+      toast.error(message);
       setIsLoading(false);
     }
   };

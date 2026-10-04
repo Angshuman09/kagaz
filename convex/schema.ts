@@ -9,8 +9,11 @@ export default defineSchema({
     upgrade: v.boolean(),
     stripeCustomerId: v.optional(v.string()), 
     subscriptionId: v.optional(v.string()), 
+    dodoCustomerId: v.optional(v.string()),
+    dodoPaymentId: v.optional(v.string()),
   }).index("by_email", ["email"])              
-    .index("by_stripe_customer", ["stripeCustomerId"]),
+    .index("by_stripe_customer", ["stripeCustomerId"])
+    .index("by_dodo_customer", ["dodoCustomerId"]),
     
   pdfFiles: defineTable({
     fileId: v.string(),

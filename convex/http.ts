@@ -133,4 +133,41 @@ http.route({
   }),
 });
 
+http.route({
+  path: "/dodo/upgrade-user",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const { email, upgrade, customerId, subscriptionId, paymentId } = await request.json();
+      
+      console.log("Convex Dodo HTTP action received:", { email, upgrade });
+      
+      const result = await ctx.runMutation(api.user.upgradeUser, {
+        email,
+        upgrade,
+      });
+
+      if (customerId || subscriptionId || paymentId) {
+        await ctx.runMutation(api.user.updateDodoInfo, {
+          email,
+          customerId,
+          subscriptionId,
+          paymentId,
+        });
+      }
+      
+      return new Response(JSON.stringify({ success: true, result }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    } catch (error) {
+      console.error("Convex Dodo upgrade error:", error);
+      return new Response(
+        JSON.stringify({ success: false, error: String(error) }), 
+        { status: 500 }
+      );
+    }
+  }),
+});
+
 export default http;
