@@ -1,17 +1,13 @@
 "use client";
 import {
   Upload,
-  FileText,
   Crown,
-  User,
   Menu,
   X,
   LayoutDashboard,
-  Sparkles,
-  Gem,
+  HardDrive,
   CrownIcon,
 } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FileUpload } from "./file-upload";
@@ -19,6 +15,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useUser } from "@clerk/clerk-react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import Image from "next/image";
 
 export const Sidebar = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -37,6 +34,12 @@ export const Sidebar = () => {
 
   const progressValue =
     getAllFiles && getAllFiles.length ? (getAllFiles.length / 5) * 100 : 0;
+
+  const navItemClass = (active: boolean) =>
+    active
+      ? "flex items-center gap-3 px-3 py-2.5 rounded-full w-full transition-all font-medium text-sm bg-gray-100 hover:bg-gray-200 cursor-pointer"
+      : "flex items-center gap-3 px-3 py-2.5 rounded-full text-slate-600 w-full hover:bg-slate-100 hover:text-slate-900 transition-colors font-medium text-sm";
+
   return (
     <>
       <button
@@ -56,7 +59,7 @@ export const Sidebar = () => {
       <aside
         className={`
           fixed lg:static inset-y-0 left-0 z-40
-          w-72 bg-white border-r border-slate-200
+          w-72 bg-white border-r border-slate-200/80
           transform transition-transform duration-300 ease-in-out
           ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
           flex flex-col
@@ -65,22 +68,21 @@ export const Sidebar = () => {
         {/* Logo */}
         <div
           onClick={() => router.push("/")}
-          className="h-16 flex items-center px-6 border-b border-slate-200 cursor-pointer"
+          className="h-16 flex items-center px-6 border-b border-slate-200/80 cursor-pointer"
         >
-          <div className="flex items-center gap-2">
-            <span className="text-xl font-semibold text-slate-900">कागज़</span>
+          <div className="flex items-center gap-2.5">
+            <Image src={"/logo.png"} width={20} height={20} alt="logo"/>
+            <div className="leading-tight">
+              <span className="text-lg font-semibold text-slate-900">कागज़</span>
+            </div>
           </div>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-4 py-6 space-y-5">
+        <nav className="flex-1 px-4 py-5 space-y-5.5">
           <button
             onClick={() => router.push("/dashboard")}
-            className={
-              path === "/dashboard"
-                ? "flex items-center gap-3 px-3 py-2.5 rounded-lg bg-slate-100 text-slate-900 w-full hover:bg-slate-200 transition-colors font-medium text-sm"
-                : "flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 w-full hover:bg-slate-100 transition-colors font-medium text-sm group border-b border-t border-slate-200"
-            }
+            className={navItemClass(path === "/dashboard")}
           >
             <LayoutDashboard size={18} />
             <span>Dashboard</span>
@@ -91,7 +93,7 @@ export const Sidebar = () => {
               disabled={
                 getAllFiles?.length === 5 && currentUser?.upgrade === false
               }
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg w-full bg-slate-900 text-white hover:bg-slate-800 transition-colors cursor-pointer font-medium text-sm"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-full w-full text-white hover:from-slate-800 hover:to-slate-600 transition-all cursor-pointer font-medium text-sm shadow-sm hover:shadow"
             >
               <Upload size={18} />
               <span>Upload PDF</span>
@@ -100,35 +102,36 @@ export const Sidebar = () => {
 
           <button
             onClick={() => router.push("/dashboard/upgrade")}
-            className={
-              path === "/dashboard/upgrade"
-                ? "flex items-center gap-3 px-3 py-2.5 rounded-lg bg-slate-100 text-slate-900 w-full hover:bg-slate-200 transition-colors font-medium text-sm"
-                : "flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 w-full hover:bg-slate-100 transition-colors font-medium text-sm group border-b border-t border-slate-200"
-            }
+            className={navItemClass(path === "/dashboard/upgrade")}
           >
             <Crown size={18} className="text-amber-500" />
             <span>Upgrade</span>
-            <span className="ml-auto text-xs bg-amber-50 text-amber-600 px-2 py-0.5 rounded font-semibold">
+            <span className="ml-auto text-[10px] font-bold bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full ring-1 ring-inset ring-amber-200/70">
               PRO
             </span>
           </button>
         </nav>
 
         {/* Progress Section */}
-
         {currentUser?.upgrade === false && (
-          <div className="p-6 border-t border-slate-200 space-y-4">
-            <div className="p-4 rounded-lg bg-slate-50 border border-slate-200">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-medium text-slate-700">
+          <div className="p-4 border-t border-slate-200/80 space-y-3">
+            <div className="p-4 rounded-xl border border-slate-200/80 bg-gradient-to-b from-white to-slate-50 shadow-sm">
+              <div className="flex items-center justify-between mb-2.5">
+                <span className="flex items-center gap-1.5 text-sm font-medium text-slate-700">
+                  <HardDrive size={14} className="text-slate-400" />
                   Storage
                 </span>
                 <span className="text-sm font-semibold text-slate-900">
                   {getAllFiles?.length}/5 PDFs
                 </span>
               </div>
-              <Progress value={progressValue} className="h-2" />
-              <p className="text-xs text-slate-500 mt-3">
+              <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200/80">
+                <div
+                  className="h-full rounded-full bg-gray-600"
+                  style={{ width: `${progressValue}%` }}
+                />
+              </div>
+              <p className="text-xs text-slate-500 mt-2.5">
                 {5 - (getAllFiles?.length || 0)} upload
                 {5 - (getAllFiles?.length || 0) !== 1 ? "s" : ""} remaining on
                 free plan
@@ -137,9 +140,8 @@ export const Sidebar = () => {
 
             <button
               onClick={() => router.push("/dashboard/upgrade")}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-slate-900 text-white hover:bg-slate-800 transition-colors text-sm font-medium"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-full bg-gray-900 hover:bg-black cursor-pointer text-white text-sm font-semibold"
             >
-              <CrownIcon size={16} />
               Upgrade Plan
             </button>
           </div>

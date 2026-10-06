@@ -19,10 +19,13 @@ export const TextEditor = ({editor}: EditorExtensionProps) => {
     
 
     useEffect(() => {
-        if (getNotes) {
-            editor && editor.commands.setContent(getNotes[0]?.note);
+        // Only load saved content once the query has resolved AND a note exists.
+        // Calling setContent(undefined) wipes the document — e.g. while an
+        // AI answer is still streaming.
+        if (getNotes && editor && getNotes.length > 0 && getNotes[0]?.note) {
+            editor.commands.setContent(getNotes[0].note);
         }
-    }, [getNotes && editor])
+    }, [getNotes, editor])
 
     if (!editor) {
         return null

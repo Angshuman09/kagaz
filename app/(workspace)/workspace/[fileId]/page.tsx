@@ -73,7 +73,7 @@ const Workspace = () => {
   const file = getFileRecord[0]
 
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex flex-col h-screen bg-slate-50/70">
       <WorkspaceHeader editor={editor} fileName={file.fileName} />
 
       <div className="flex-1 overflow-hidden p-4">
@@ -82,7 +82,7 @@ const Workspace = () => {
             <TextEditor editor={editor} />
           </Panel>
 
-          <PanelResizeHandle className="w-2 cursor-col-resize" />
+          <PanelResizeHandle className="mx-1 w-1.5 cursor-col-resize rounded-full bg-slate-200/70 hover:bg-indigo-300 transition-colors" />
 
           <Panel defaultSize={50} minSize={20} className="h-full">
             <PdfViewer fileUrl={file.fileUrl} />

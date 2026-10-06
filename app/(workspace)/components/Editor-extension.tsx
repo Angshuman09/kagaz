@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Editor } from "@tiptap/react";
 import {
   Bold,
@@ -29,10 +29,106 @@ interface EditorExtensionProps {
   editor: Editor | null;
 }
 
+/**
+ * Convert markdown (what the AI model actually returns) into HTML
+ * that Tiptap can parse. Handles: **bold**, *italic*, _italic_,
+ * `code`, # headings, -/* bullet lists, 1. ordered lists, > blockquotes.
+ * Lines that already contain HTML tags are passed through (with inline
+ * markdown still converted), so pure-HTML responses work too.
+ */
+function markdownToHtml(markdown: string): string {
+  const lines = markdown
+    .replace(/```(?:html|markdown|md)?/g, "")
+    .split("\n");
+
+  const html: string[] = [];
+  let listType: "ul" | "ol" | null = null;
+
+  const closeList = () => {
+    if (listType) {
+      html.push(`</${listType}>`);
+      listType = null;
+    }
+  };
+
+  const applyInline = (text: string): string =>
+    text
+      .replace(/`([^`]+)`/g, "<code>$1</code>")
+      .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+      .replace(/__([^_]+)__/g, "<strong>$1</strong>")
+      .replace(/\*([^*]+)\*/g, "<em>$1</em>")
+      .replace(/_([^_]+)_/g, "<em>$1</em>");
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    if (!line) {
+      closeList();
+      continue;
+    }
+
+    // Already HTML — pass through, but still convert leftover markdown inline
+    if (line.startsWith("<")) {
+      closeList();
+      html.push(applyInline(line));
+      continue;
+    }
+
+    // Headings: # through ######
+    const heading = line.match(/^(#{1,6})\s+(.*)$/);
+    if (heading) {
+      closeList();
+      const level = heading[1].length;
+      html.push(`<h${level}>${applyInline(heading[2])}</h${level}>`);
+      continue;
+    }
+
+    // Bullet list: - item, * item, + item
+    if (/^[-*+]\s+/.test(line)) {
+      if (listType !== "ul") {
+        closeList();
+        html.push("<ul>");
+        listType = "ul";
+      }
+      html.push(`<li>${applyInline(line.replace(/^[-*+]\s+/, ""))}</li>`);
+      continue;
+    }
+
+    // Ordered list: 1. item, 1) item
+    const ordered = line.match(/^\d+[.)]\s+(.*)$/);
+    if (ordered) {
+      if (listType !== "ol") {
+        closeList();
+        html.push("<ol>");
+        listType = "ol";
+      }
+      html.push(`<li>${applyInline(ordered[1])}</li>`);
+      continue;
+    }
+
+    // Blockquote: > text
+    if (line.startsWith(">")) {
+      closeList();
+      html.push(
+        `<blockquote><p>${applyInline(line.replace(/^>\s?/, ""))}</p></blockquote>`,
+      );
+      continue;
+    }
+
+    // Plain paragraph
+    closeList();
+    html.push(`<p>${applyInline(line)}</p>`);
+  }
+
+  closeList();
+  return html.join("");
+}
+
 export const EditorExtension = ({ editor }: EditorExtensionProps) => {
   const [isActive, setIsActive] = useState(false);
   const { user } = useUser();
   const [loading, setLoading] = useState(false);
+  // Ref guard so a double-click / re-render can't start two concurrent streams
+  const streamingRef = useRef(false);
 
   const SearchAI = useAction(api.myAction.search);
   const addNotes = useMutation(api.notes.saveNote);
@@ -59,6 +155,9 @@ export const EditorExtension = ({ editor }: EditorExtensionProps) => {
   }
 
   const onAiClick = async () => {
+    // Prevent double-invocation (React state updates are async, so also use a ref)
+    if (streamingRef.current || loading) return;
+    streamingRef.current = true;
     setLoading(true);
     const selectedText = editor.state.doc.textBetween(
       editor.state.selection.from,
@@ -67,6 +166,7 @@ export const EditorExtension = ({ editor }: EditorExtensionProps) => {
     );
 
     if (!selectedText) {
+      streamingRef.current = false;
       setLoading(false);
       return;
     }
@@ -109,21 +209,14 @@ STYLE GUIDELINES:
 - Do not leave large space between the answer and key points.
 - Focus on giving value, not disclaimers.
 
-OUTPUT FORMAT (HTML ONLY):
-<h2>Answer</h2>
-<p>Main explanation here.</p>
-<ul>
-  <li>Important point</li>
-  <li>Another helpful point</li>
-</ul>
+OUTPUT FORMAT:
+Start your response with exactly one <h2>Answer</h2> heading, followed by your explanation.
+Use markdown for formatting: **bold** for emphasis, *italic* for italic, - for bullet points, and # for subheadings.
 `;
 
-      // Insert initial placeholder at the end of current content
-      const currentPos = editor.state.doc.content.size;
-      editor.commands.insertContentAt(
-        currentPos,
-        "<p><strong>Answer: </strong></p>",
-      );
+      // NOTE: we deliberately do NOT insert a separate "Answer:" placeholder here —
+      // the model already outputs a single <h2>Answer</h2> heading. Inserting both
+      // was the cause of the duplicate answers.
 
       // Store the position where we'll insert streaming content
       const answerStartPos = editor.state.doc.content.size;
@@ -158,6 +251,18 @@ OUTPUT FORMAT (HTML ONLY):
 
       console.log("Starting to read stream...");
 
+      // Buffer for SSE lines that may be split across network chunks
+      let lineBuffer = "";
+
+      // Replace the streamed region with the current full answer.
+      // Guarded so a shrinking doc can't throw and desync the insert.
+      const renderAnswer = (content: string) => {
+        const docSize = editor.state.doc.content.size;
+        const from = Math.min(answerStartPos, docSize);
+        editor.commands.deleteRange({ from, to: docSize });
+        editor.commands.insertContentAt(from, markdownToHtml(content));
+      };
+
       while (true) {
         const { done, value } = await reader.read();
 
@@ -169,7 +274,10 @@ OUTPUT FORMAT (HTML ONLY):
         const chunk = decoder.decode(value, { stream: true });
         console.log("Received chunk:", chunk);
 
-        const lines = chunk.split("\n");
+        lineBuffer += chunk;
+        const lines = lineBuffer.split("\n");
+        // Keep the last element — it may be an incomplete line
+        lineBuffer = lines.pop() ?? "";
 
         for (const line of lines) {
           if (line.trim() === "") continue;
@@ -179,36 +287,29 @@ OUTPUT FORMAT (HTML ONLY):
 
             if (data === "[DONE]") {
               console.log("Received DONE signal");
-              break;
+              continue;
             }
 
             try {
               const parsed = JSON.parse(data);
               console.log("Parsed data:", parsed);
 
-              streamedAnswer += parsed.text;
+              if (typeof parsed.text === "string" && parsed.text.length > 0) {
+                streamedAnswer += parsed.text;
+              }
 
-              // Clean the answer
-              const cleanedAnswer = streamedAnswer
-                .replace(/```html/g, "")
-                .replace(/```/g, "");
-
-              // Delete previous answer content and insert updated one
-              const endPos = editor.state.doc.content.size;
-
-              // Delete from answer start to end
-              editor.commands.deleteRange({
-                from: answerStartPos,
-                to: endPos,
-              });
-
-              // Insert updated content
-              editor.commands.insertContentAt(answerStartPos, cleanedAnswer);
+              renderAnswer(streamedAnswer);
             } catch (e) {
               console.error("Error parsing chunk:", e, "Data:", data);
             }
           }
         }
+      }
+
+      // Final reconciliation — in case the last chunks were lost or the
+      // region was edited mid-stream, ensure the full answer is present exactly once.
+      if (streamedAnswer.trim().length > 0) {
+        renderAnswer(streamedAnswer);
       }
 
       console.log("Final streamed answer:", streamedAnswer);
@@ -224,8 +325,9 @@ OUTPUT FORMAT (HTML ONLY):
       console.log("Streaming completed successfully");
     } catch (error) {
       console.error("Error during AI streaming:", error);
-      alert("Error: " + (error as Error).message);
+      toast.error("Something went wrong while generating the answer.");
     } finally {
+      streamingRef.current = false;
       setLoading(false);
     }
   };
@@ -399,7 +501,7 @@ OUTPUT FORMAT (HTML ONLY):
           title="AI Assistant"
         >
           <Sparkle className="w-4 h-4" />
-          <span>{loading ? "Thinking..." : "AI"}</span>
+          <span>{loading ? "Thinking..." : "Ask"}</span>
         </button>
       </div>
     </div>
