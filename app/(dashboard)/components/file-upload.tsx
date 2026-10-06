@@ -21,6 +21,7 @@ import { api } from "@/convex/_generated/api";
 import { useAction, useMutation } from "convex/react";
 import { Loader2, Loader2Icon } from "lucide-react"
 import { useUser } from "@clerk/clerk-react";
+import { toast } from "sonner";
 
 export function FileUpload({ children }: { children: React.ReactNode }) {
     const { user } = useUser();
@@ -39,37 +40,43 @@ export function FileUpload({ children }: { children: React.ReactNode }) {
     }
 
     const onUpload = async () => {
+        if (!file) {
+            toast.error("Please select a PDF file first");
+            return;
+        }
         setLoading(true);
-        const postUrl = await generateUploadUrl();
-        // Step 2: POST the file to the URL
-        const result = await fetch(postUrl, {
-            method: "POST",
-            headers: { "Content-Type": file!.type },
-            body: file!,
-        });
-        const { storageId } = await result.json();
-        const fileId = uuidv4();
-        // console.log(storageId)
-        const fileUrl = await getFileUrl({ storageId });
-        const response = await InsertFileEntry({
-            fileId: fileId,
-            storageId: storageId,
-            fileName: name ?? "untitled file name",
-            createdBy: user?.primaryEmailAddress?.emailAddress as string,
-            fileUrl: fileUrl as string
-        })
+        try {
+            const postUrl = await generateUploadUrl();
+            // Step 2: POST the file to the URL
+            const result = await fetch(postUrl, {
+                method: "POST",
+                headers: { "Content-Type": file.type },
+                body: file,
+            });
+            const { storageId } = await result.json();
+            const fileId = uuidv4();
+            const fileUrl = await getFileUrl({ storageId });
+            await InsertFileEntry({
+                fileId: fileId,
+                storageId: storageId,
+                fileName: name ?? "untitled file name",
+                createdBy: user?.primaryEmailAddress?.emailAddress as string,
+                fileUrl: fileUrl as string
+            })
 
-        // console.log(response)
-
-        const apiResponse = await axios.get('api/pdf-loader?pdfUrl=' + fileUrl);
-        // console.log(apiResponse.data.result)
-        const embedResponse = await embedDocuments({
-            splitText: apiResponse.data.result,
-            fileId: fileId
-        })
-        // console.log(embedResponse)
-        setLoading(false);
-        setOpen(false);
+            const apiResponse = await axios.get('/api/pdf-loader?pdfUrl=' + encodeURIComponent(fileUrl as string));
+            await embedDocuments({
+                splitText: apiResponse.data.result,
+                fileId: fileId
+            })
+            setOpen(false);
+            toast.success(`"${name ?? "untitled file name"}" uploaded`);
+        } catch (error) {
+            console.error("Upload failed:", error);
+            toast.error(`Upload failed: ${(error as Error).message}`);
+        } finally {
+            setLoading(false);
+        }
     }
     return (
         <Dialog open={open} onOpenChange={setOpen}>

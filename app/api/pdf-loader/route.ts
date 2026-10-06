@@ -38,11 +38,11 @@ export const GET = async (req: Request) => {
         pdfTextContent += doc.pageContent + " ";
     })
 
-    const splitter = new RecursiveCharacterTextSplitter({ chunkSize: 100, chunkOverlap: 0 })
+    const splitter = new RecursiveCharacterTextSplitter({ chunkSize: 1000, chunkOverlap: 0 })
 
     const splitDocs = await splitter.splitDocuments(docs)
 
-    let splitList: string[] = [];
+    const splitList: string[] = [];
     splitDocs.forEach((doc) => {
         splitList.push(doc.pageContent)
     })

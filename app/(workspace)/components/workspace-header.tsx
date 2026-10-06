@@ -6,8 +6,9 @@ import { api } from "@/convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
 import { useState } from "react";
 import { Editor } from "@tiptap/react";
-import { Undo, Undo2 } from "lucide-react";
+import { Trash2, Undo, Undo2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { DeleteFileDialog } from "@/components/delete-file-dialog";
 
 export const WorkspaceHeader = ({
   fileName,
@@ -19,6 +20,7 @@ export const WorkspaceHeader = ({
   const router = useRouter();
   const { fileId } = useParams();
   const [loading, setLoading] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const { user } = useUser();
   const saveNote = useMutation(api.notes.saveNote);
@@ -58,6 +60,14 @@ export const WorkspaceHeader = ({
       {/* Profile */}
 
       <div className="flex items-center gap-4">
+        <button
+          type="button"
+          aria-label="Delete file"
+          onClick={() => setDeleteOpen(true)}
+          className="bg-slate-200 w-10 h-10 p-2 rounded-full cursor-pointer hover:bg-red-100 hover:text-red-600 transition-colors"
+        >
+          <Trash2 size={20} />
+        </button>
         <Button onClick={HandleSave} disabled={loading}>
           {loading ? "Saving..." : "Save"}
         </Button>
@@ -70,6 +80,14 @@ export const WorkspaceHeader = ({
           }}
         />
       </div>
+
+      <DeleteFileDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        fileId={fileId as string}
+        fileName={fileName}
+        onDeleted={() => router.push("/dashboard")}
+      />
     </header>
   );
 };

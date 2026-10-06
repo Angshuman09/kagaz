@@ -29,8 +29,9 @@ export default defineSchema({
     metadata: v.any(),
   }).vectorIndex("byEmbedding", {
     vectorField: "embedding",
-    dimensions: 3072,
-  }),
+    dimensions: 2048,
+    filterFields: ["metadata.fileId"],
+  }).index("by_file_id", ["metadata.fileId"]),
 
   notes: defineTable({
     fileId: v.string(),

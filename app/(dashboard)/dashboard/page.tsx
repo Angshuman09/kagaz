@@ -1,5 +1,5 @@
 'use client'
-import { FileText, Upload } from 'lucide-react';
+import { FileText, Trash2, Upload } from 'lucide-react';
 
 import React, { useState } from 'react';
 import { UserButton, useUser } from '@clerk/clerk-react';
@@ -11,6 +11,7 @@ import Upgrade from './upgrade/page';
 import { usePathname } from 'next/navigation';
 import {Sidebar} from '../components/sidebar'
 import Header from '../components/header'
+import { DeleteFileDialog } from '@/components/delete-file-dialog';
 
 export default function Dashboard() {
 
@@ -18,6 +19,8 @@ export default function Dashboard() {
 
   const { user } = useUser();
   // const [loading, setLoading] = useState(false);
+
+  const [fileToDelete, setFileToDelete] = useState<{ fileId: string; fileName: string } | null>(null);
 
   const getAllFiles = useQuery(api.fileStorage.getUserFiles,{
     userEmail: user?.primaryEmailAddress?.emailAddress as string
@@ -73,11 +76,23 @@ export default function Dashboard() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {getAllFiles.map((pdf, index) => (
                   
-                    <button
+                    <div
                     key={index}
-                    className="bg-white rounded-lg border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all overflow-hidden text-left group"
+                    className="relative bg-white rounded-lg border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all overflow-hidden text-left group"
                   >
-                    <Link href={`/workspace/${pdf.fileId}`}>
+                    <button
+                      type="button"
+                      aria-label={`Delete ${pdf?.fileName}`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setFileToDelete({ fileId: pdf.fileId, fileName: pdf.fileName });
+                      }}
+                      className="absolute top-3 right-3 z-10 h-9 w-9 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-red-600 hover:border-red-200 hover:bg-red-50 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 transition-all cursor-pointer"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                    <Link href={`/workspace/${pdf.fileId}`} className="block">
                     {/* PDF Preview */}
                     <div className="h-40 bg-slate-50 flex items-center justify-center border-b border-slate-200 group-hover:bg-slate-100 transition-colors">
                       <FileText size={48} className="text-slate-300" />
@@ -94,13 +109,22 @@ export default function Dashboard() {
                       </div>
                     </div>
                     </Link>
-                  </button>
+                  </div>
                 ))}
               </div>
             </div>
           )}
         </main>
       </div>
+
+      <DeleteFileDialog
+        open={fileToDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setFileToDelete(null);
+        }}
+        fileId={fileToDelete?.fileId ?? null}
+        fileName={fileToDelete?.fileName ?? null}
+      />
     </>
   );
 }

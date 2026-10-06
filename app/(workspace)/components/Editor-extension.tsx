@@ -23,6 +23,7 @@ import { useAction, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api.js";
 import { useParams } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
+import { toast } from "sonner";
 
 interface EditorExtensionProps {
   editor: Editor | null;
@@ -82,6 +83,12 @@ export const EditorExtension = ({ editor }: EditorExtensionProps) => {
 
       console.log("Search result:", result);
 
+      if (!result || result.trim().length === 0) {
+        toast.warning(
+          "No indexed content found for this PDF — the AI will answer from general knowledge."
+        );
+      }
+
       const PROMPT = `
 You are a helpful AI assistant.
 
@@ -105,7 +112,6 @@ STYLE GUIDELINES:
 OUTPUT FORMAT (HTML ONLY):
 <h2>Answer</h2>
 <p>Main explanation here.</p>
-<h3>Key Points</h3>
 <ul>
   <li>Important point</li>
   <li>Another helpful point</li>
